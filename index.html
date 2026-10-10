@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>夜市彈珠台</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 20px;
+    background: #c8a477; font-family: "Microsoft JhengHei", sans-serif; color: #4e342e;
+  }
+  .layout {
+    display: flex; justify-content: center; align-items: flex-start;
+    gap: 20px; flex-wrap: wrap;
+  }
+
+  /* ---------- 左:玩法說明 ---------- */
+  .rules {
+    width: 270px; padding: 18px 18px 14px; border-radius: 18px;
+    background: linear-gradient(160deg, #fffde7, #fff59d);
+    border: 4px solid #d84315; box-shadow: 0 8px 18px rgba(0,0,0,.28);
+    position: relative;
+  }
+  .rules::before {
+    content: "📖 玩法說明"; position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    background: #d84315; color: #fff; font-weight: bold; padding: 4px 18px;
+    border-radius: 20px; font-size: 16px; white-space: nowrap;
+  }
+  .rules ol { margin: 14px 0 10px; padding: 0; list-style: none; counter-reset: s; }
+  .rules li {
+    counter-increment: s; position: relative; padding: 6px 0 6px 38px;
+    font-size: 14px; line-height: 1.5; border-bottom: 1px dashed #e0c36a;
+  }
+  .rules li:last-child { border-bottom: none; }
+  .rules li::before {
+    content: counter(s); position: absolute; left: 0; top: 6px;
+    width: 26px; height: 26px; border-radius: 50%; background: #ef6c00; color: #fff;
+    font-weight: bold; text-align: center; line-height: 26px;
+  }
+  .rules b { color: #c62828; }
+  .rules table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  .rules th { background: #ef6c00; color: #fff; padding: 4px; }
+  .rules td { text-align: center; padding: 3px; border: 1px solid #e6c85a; background: #fffbe0; }
+  .rules .tip {
+    margin-top: 10px; padding: 8px 10px; background: #ffecb3; border-radius: 10px;
+    font-size: 12.5px; line-height: 1.5; color: #6d4c41;
+  }
+
+  /* ---------- 中:彈珠台 ---------- */
+  .machine canvas {
+    display: block; width: min(440px, 100%); height: auto;
+    border-radius: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.35);
+  }
+
+  /* ---------- 右:控制面板 ---------- */
+  .panel {
+    width: 250px; padding: 18px; border-radius: 18px;
+    background: #6d4c41; color: #fff; box-shadow: 0 8px 18px rgba(0,0,0,.28);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .panel #msg {
+    min-height: 62px; padding: 10px; border-radius: 12px; background: #fff3e0;
+    color: #b71c1c; font-weight: bold; text-align: center; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bet-box { background: #5d4037; border-radius: 14px; padding: 12px; text-align: center; }
+  .bet-box .label { font-size: 13px; opacity: .85; }
+  .bet-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+  #betShow { min-width: 38px; font-size: 28px; font-weight: bold; color: #ffd54f; }
+  .panel button {
+    border: none; border-radius: 999px; color: #fff; font-weight: bold; font-size: 15px;
+    padding: 11px 16px; cursor: pointer; transition: transform .1s, filter .15s;
+    box-shadow: 0 3px 0 rgba(0,0,0,.3);
+  }
+  .panel button:hover { filter: brightness(1.1); }
+  .panel button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.3); }
+  .small { background: #8d6e63; padding: 8px 12px !important; font-size: 14px !important; }
+  #coin  { background: #4f8fd6; }
+  #draw  { background: #e0473e; }
+  #fire  { background: #f0a43a; touch-action: none; }
+  #reset { background: #78909c; }
+  .hint { font-size: 12px; line-height: 1.6; opacity: .85; text-align: center; }
+
+  @media (max-width: 900px) { .rules, .panel { width: min(440px, 100%); } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- 左:玩法說明 -->
+  <aside class="rules">
+    <ol>
+      <li>點機台左上角的<b>灰色投幣孔</b>(或右邊投幣按鈕),投 <b>10 元</b>換 10 粒彈珠。</li>
+      <li>設定<b>投入倍數</b>(用 − ＋ 按鈕,或點右上角<b>投珠口</b>,每點一下<b>倍數 +1</b>),倍數越高,中獎吐越多。</li>
+      <li>按<b>抽倍數</b>,上方會跑出 2、4、6、8、10 粒其中一個。</li>
+      <li>洞口會亮起<b>紅燈</b>,彈珠掉進亮燈的洞就中獎。</li>
+      <li><b>往下拉右邊拉桿</b>(或按住按鈕、空白鍵)蓄力,放開發射。</li>
+      <li>中獎吐出<b>粒數 × 倍數</b>;沒中則損失投入的粒數。</li>
+    </ol>
+    <table>
+      <tr><th>抽到</th><th>亮燈數</th><th>難度</th></tr>
+      <tr><td>2 粒</td><td>4 顆</td><td>⭐</td></tr>
+      <tr><td>4 粒</td><td>3 顆</td><td>⭐⭐</td></tr>
+      <tr><td>6 粒</td><td>2 顆</td><td>⭐⭐⭐</td></tr>
+      <tr><td>8 粒</td><td>1 顆</td><td>⭐⭐⭐⭐</td></tr>
+      <tr><td>10 粒</td><td>1 顆(刁鑽位)</td><td>⭐⭐⭐⭐⭐</td></tr>
+    </table>
+    <div class="tip">💡 力道太小彈珠會退回,不扣珠。蓄力約八成最容易繞上去!</div>
+  </aside>
+
+  <!-- 中:彈珠台 -->
+  <main class="machine">
+    <canvas id="c" width="440" height="800"></canvas>
+  </main>
+
+  <!-- 右:控制面板 -->
+  <aside class="panel">
+    <div id="msg"></div>
+
+    <div class="bet-box">
+      <div class="label">投入倍數</div>
+      <div class="bet-row">
+        <button id="bMinus" class="small">−</button>
+        <span id="betShow">1</span>
+        <button id="bPlus" class="small">+</button>
+      </div>
+      <div class="bet-row">
+        <button id="bPlus10" class="small">+10</button>
+        <button id="bMax" class="small">MAX</button>
+      </div>
+    </div>
+
+    <button id="coin">💰 投幣 10 元 (+10 粒)</button>
+    <button id="draw">🎲 抽倍數</button>
+    <button id="fire">按住蓄力 → 放開發射</button>
+    <button id="reset">重新開始</button>
+
+    <div class="hint">流程:設定倍數 → 抽獎 → 蓄力發射<br>空白鍵也可以蓄力</div>
+  </aside>
+
+</div>
+<script src="script.js"></script>
+</body>
+</html>
